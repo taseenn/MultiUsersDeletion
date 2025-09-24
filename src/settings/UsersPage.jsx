@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Table, TableRow, TableCell, TableHead, TableBody, Switch, TableFooter, FormControlLabel,
+  Table, TableRow, TableCell, TableHead, TableBody, Switch, TableFooter, FormControlLabel,Tooltip, Checkbox,IconButton
 } from '@mui/material';
 import LoginIcon from '@mui/icons-material/Login';
 import LinkIcon from '@mui/icons-material/Link';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useCatch, useEffectAsync } from '../reactHelper';
 import { formatBoolean, formatTime } from '../common/util/formatter';
 import { useTranslation } from '../common/components/LocalizationProvider';
@@ -17,6 +18,7 @@ import { useManager } from '../common/util/permissions';
 import SearchHeader, { filterByKeyword } from './components/SearchHeader';
 import useSettingsStyles from './common/useSettingsStyles';
 import fetchOrThrow from '../common/util/fetchOrThrow';
+import RemoveDialog from '../common/components/RemoveDialog';
 
 const UsersPage = () => {
   const { classes } = useSettingsStyles();
@@ -30,6 +32,8 @@ const UsersPage = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [loading, setLoading] = useState(false);
   const [temporary, setTemporary] = useState(false);
+  const [selectedUser, setSelectedUser] = useState([]);
+  const [removing, setRemoving] = useState(false);
 
   const handleLogin = useCatch(async (userId) => {
     await fetchOrThrow(`/api/session/${userId}`);
@@ -59,13 +63,47 @@ const UsersPage = () => {
       setLoading(false);
     }
   }, [timestamp]);
+   
+    const toggleUser = (userId) => {
+        setSelectedUser((prev) =>
+        prev.includes(userId)
+        ? prev.filter((u) => u !== userId)
+        : [...prev, userId]
+      );
+    };
+       
+    const handleRemove = () => {
+    if (selectedUser.length > 0) {
+      setRemoving(true);
+      }
+    };
 
-  return (
+      const handleRemoveResult = useCatch(async (confirmed) => {
+      if (confirmed) {
+        for (const id of selectedUser) {
+          await fetchOrThrow(`/api/users/${id}`, { method: 'DELETE' });
+        }
+        setTimestamp(Date.now());
+        setSelectedUser([]);
+      }
+      setRemoving(false);
+    });
+
+  return (<>
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'settingsUsers']}>
       <SearchHeader keyword={searchKeyword} setKeyword={setSearchKeyword} />
       <Table className={classes.table}>
         <TableHead>
           <TableRow>
+            <TableCell>
+             <Tooltip title={t('sharedRemove')}>
+              <span>
+              <IconButton size="small" onClick={handleRemove} disabled={selectedUser.length === 0} sx={{marginLeft: -1 }} >
+              <DeleteIcon fontSize="small" />
+              </IconButton>
+              </span>
+              </Tooltip>
+              </TableCell>
             <TableCell>{t('sharedName')}</TableCell>
             <TableCell>{t('userEmail')}</TableCell>
             <TableCell>{t('userAdmin')}</TableCell>
@@ -77,6 +115,9 @@ const UsersPage = () => {
         <TableBody>
           {!loading ? items.filter((u) => temporary || !u.temporary).filter(filterByKeyword(searchKeyword)).map((item) => (
             <TableRow key={item.id}>
+              <TableCell padding="checkbox">
+              <Checkbox size="small" checked={selectedUser.includes(item.id)} onChange={() => toggleUser(item.id)} />
+              </TableCell>
               <TableCell>{item.name}</TableCell>
               <TableCell>{item.email}</TableCell>
               <TableCell>{formatBoolean(item.administrator, t)}</TableCell>
@@ -92,11 +133,11 @@ const UsersPage = () => {
                 />
               </TableCell>
             </TableRow>
-          )) : (<TableShimmer columns={6} endAction />)}
+          )) : (<TableShimmer columns={7} endAction />)}
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={6} align="right">
+            <TableCell colSpan={7} align="right">
               <FormControlLabel
                 control={(
                   <Switch
@@ -114,6 +155,13 @@ const UsersPage = () => {
       </Table>
       <CollectionFab editPath="/settings/user" />
     </PageLayout>
+      <RemoveDialog
+      open={removing}
+      endpoint="users"
+      itemIds={selectedUser.length > 1 ? selectedUser : []}
+      onResult={handleRemoveResult}
+      />
+    </>
   );
 };
 

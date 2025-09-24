@@ -20,13 +20,24 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const RemoveDialog = ({
-  open, endpoint, itemId, onResult,
+  open, endpoint, itemId, itemIds = [], onResult,
 }) => {
   const { classes } = useStyles();
   const t = useTranslation();
 
+  // const handleRemove = useCatch(async () => {
+  //   await fetchOrThrow(`/api/${endpoint}/${itemId}`, { method: 'DELETE' });
+  //   onResult(true);
+  // });
+
   const handleRemove = useCatch(async () => {
-    await fetchOrThrow(`/api/${endpoint}/${itemId}`, { method: 'DELETE' });
+    if (itemIds.length > 0) {
+      for (const id of itemIds) {
+        await fetchOrThrow(`/api/${endpoint}/${id}`, { method: 'DELETE' });
+      }
+    } else if (itemId) {
+      await fetchOrThrow(`/api/${endpoint}/${itemId}`, { method: 'DELETE' });
+    }
     onResult(true);
   });
 
