@@ -95,6 +95,7 @@ const ReplayPage = () => {
   const to = searchParams.get('to');
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [totalDistance, setTotalDistance] = useState(0);
 
   const loaded = Boolean(from && to && !loading && positions.length);
 
@@ -154,6 +155,13 @@ const ReplayPage = () => {
       if (!positions.length) {
         throw Error(t('sharedNoData'));
       }
+       let totalDistance = 0;
+    for (let i = 1; i < positions.length; i++) {
+      const prev = positions[i - 1];
+      const curr = positions[i];
+      totalDistance += getDistance(prev.latitude, prev.longitude, curr.latitude, curr.longitude);
+    }
+    setTotalDistance(totalDistance);
     } finally {
       setLoading(false);
     }
@@ -163,6 +171,20 @@ const ReplayPage = () => {
     const query = new URLSearchParams({ deviceId: selectedDeviceId, from, to });
     window.location.assign(`/api/positions/kml?${query.toString()}`);
   };
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const toRad = (deg) => (deg * Math.PI) / 180;
+
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
 
   return (
     <div className={classes.root}>
@@ -199,6 +221,13 @@ const ReplayPage = () => {
           {loaded ? (
             <>
               <Typography variant="subtitle1" align="center">{deviceName}</Typography>
+              <Typography variant="body1" align="center" sx={{ mt: 1 }}>
+                Total Distance:
+                {' '}
+                {totalDistance < 1000
+                  ? `${totalDistance.toFixed(1)} m`
+                  : `${(totalDistance / 1000).toFixed(2)} km`}
+              </Typography>
               <Slider
                 className={classes.slider}
                 max={positions.length - 1}
