@@ -12,6 +12,8 @@ import usePersistedState, { savePersistedState } from '../../common/util/usePers
 import { mapImages } from './preloadImages';
 import useMapStyles from './useMapStyles';
 import { useEffectAsync } from '../../reactHelper';
+import fetchOrThrow from '../../common/util/fetchOrThrow';
+import StorageSpace from '../../reports/components/StorageSpace';
 
 const element = document.createElement('div');
 element.style.width = '100%';
@@ -135,6 +137,26 @@ const MapView = ({ children }) => {
       currentEl.removeChild(element);
     };
   }, [containerEl]);
+
+  useEffect(() => {
+    const storageControl = new StorageSpace(async () => {
+    const response = await fetchOrThrow('/api/server');
+    const data = await response.json();
+
+    const free = data.storageSpace[0];
+    const used = data.storageSpace[1];
+    const percent = ((used / (free + used)) * 100).toFixed(1);
+
+    return { percent };
+  });
+
+  map.addControl(storageControl, 'top-right');
+
+  return () => {
+    map.removeControl(storageControl);
+  };
+
+}, [theme.direction]);
 
   return (
     <div style={{ width: '100%', height: '100%' }} ref={containerEl}>
