@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Table, TableRow, TableCell, TableHead, TableBody, Switch, TableFooter, FormControlLabel,Tooltip, Checkbox,IconButton
@@ -88,6 +88,12 @@ const UsersPage = () => {
       }
       setRemoving(false);
     });
+
+   useEffect(() => {
+      if (selectedUser.length === 0 && removing) {
+        setRemoving(false);
+      }
+    }, [selectedUser, removing]);
 
   return (<>
     <PageLayout menu={<SettingsMenu />} breadcrumbs={['settingsTitle', 'settingsUsers']}>
