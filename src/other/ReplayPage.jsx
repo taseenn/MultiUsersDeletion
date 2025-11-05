@@ -75,6 +75,10 @@ const useStyles = makeStyles()((theme) => ({
       marginTop: theme.spacing(1),
     },
   },
+  distance : {
+    display: 'flex',
+    justifyContent: 'space-between',
+  }
 }));
 
 const ReplayPage = () => {
@@ -156,35 +160,28 @@ const ReplayPage = () => {
         throw Error(t('sharedNoData'));
       }
        let totalDistance = 0;
-    for (let i = 1; i < positions.length; i++) {
-      const prev = positions[i - 1];
-      const curr = positions[i];
-      totalDistance += getDistance(prev.latitude, prev.longitude, curr.latitude, curr.longitude);
-    }
-    setTotalDistance(totalDistance);
-    } finally {
-      setLoading(false);
-    }
+       for (let i = 0; i < positions.length; i++) {
+       totalDistance += positions[i].attributes.distance || 0;
+   }
+      setTotalDistance(totalDistance);
+      } finally {
+        setLoading(false);
+      }
   });
 
   const handleDownload = () => {
     const query = new URLSearchParams({ deviceId: selectedDeviceId, from, to });
     window.location.assign(`/api/positions/kml?${query.toString()}`);
   };
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371000;
-      const toRad = (deg) => (deg * Math.PI) / 180;
-
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
+    let distanceText = '';
+    if (index > 0 && positions[index]) {
+    const distance = positions[index].attributes.distance || 0;
+    if (distance < 1000) {
+      distanceText = `${distance.toFixed(1)} m`;
+    } else {
+      distanceText = `${(distance / 1000).toFixed(2)} km`;
+    } 
+  }
 
   return (
     <div className={classes.root}>
@@ -220,14 +217,14 @@ const ReplayPage = () => {
         <Paper className={classes.content} square>
           {loaded ? (
             <>
-              <Typography variant="subtitle1" align="center">{deviceName}</Typography>
-              <Typography variant="body1" align="center" sx={{ mt: 1 }}>
-                Total Distance:
-                {' '}
-                {totalDistance < 1000
-                  ? `${totalDistance.toFixed(1)} m`
-                  : `${(totalDistance / 1000).toFixed(2)} km`}
-              </Typography>
+        <div className={classes.distance}>
+        <Typography variant="subtitle1" align="center">
+          {deviceName}
+          </Typography>
+          {totalDistance < 1000
+            ? `${totalDistance.toFixed(1)} m`
+            : `${(totalDistance / 1000).toFixed(2)} km`}
+        </div>
               <Slider
                 className={classes.slider}
                 max={positions.length - 1}
@@ -248,6 +245,12 @@ const ReplayPage = () => {
                   <FastForwardIcon />
                 </IconButton>
                 {formatTime(positions[index].fixTime, 'seconds')}
+              </div>
+              <div className={classes.distance}>
+                <Typography variant="subtitle1">Position distance</Typography>
+                {distanceText && (
+                  <Typography variant="subtitle1">{distanceText} </Typography>
+                )} 
               </div>
             </>
           ) : (
