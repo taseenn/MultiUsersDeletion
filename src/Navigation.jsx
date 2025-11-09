@@ -61,6 +61,7 @@ import { generateLoginToken } from './common/components/NativeInterface';
 import { useLocalization } from './common/components/LocalizationProvider';
 import fetchOrThrow from './common/util/fetchOrThrow';
 import AuditPage from './reports/AuditPage';
+import XmlFile from './main/XmlFile';
 
 const Navigation = () => {
   const dispatch = useDispatch();
@@ -162,6 +163,7 @@ const Navigation = () => {
           <Route path="notification" element={<NotificationPage />} />
           <Route path="preferences" element={<PreferencesPage />} />
           <Route path="server" element={<ServerPage />} />
+          <Route path="xml" element={<XmlFile />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="user/:id/connections" element={<UserConnectionsPage />} />
           <Route path="user/:id" element={<UserPage />} />

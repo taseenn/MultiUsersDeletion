@@ -15,6 +15,7 @@ import SmartphoneIcon from '@mui/icons-material/Smartphone';
 import HelpIcon from '@mui/icons-material/Help';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import ArticleIcon from '@mui/icons-material/Article';
 import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from '../../common/components/LocalizationProvider';
@@ -71,6 +72,12 @@ const SettingsMenu = () => {
               link="/geofences"
               icon={<CreateIcon />}
               selected={location.pathname.startsWith('/settings/geofence')}
+            />
+            <MenuItem
+            title="XmlFile"
+            link="/settings/xml"
+            icon={<ArticleIcon />}
+            selected={location.pathname === '/settings/xml'}
             />
             {!features.disableGroups && (
               <MenuItem
